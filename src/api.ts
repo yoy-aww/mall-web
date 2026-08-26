@@ -1,0 +1,68 @@
+// 统一 API 请求层
+const API_BASE = '/api';
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...init,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const msg = body?.error || `请求失败 (${res.status})`;
+    throw new Error(msg);
+  }
+  const data = (await res.json()) as { success: boolean; data: T; error?: string };
+  if (!data.success) throw new Error(data.error || '接口返回失败');
+  // 浏览器端七牛 https:// 端点不稳，降级为 http://（小程序端本就 http，正常）
+  return fixHttps(data.data) as T
+}
+// 七牛外链 HTTP 正常、HTTPS 不稳，展示用图统一降级为 http
+function fixHttps(v: any): any {
+  if (typeof v === 'string') return v.replace(/^https:\/\//, 'http://')
+  if (Array.isArray(v)) return v.map(x => fixHttps(x))
+  if (v && typeof v === 'object') return Object.fromEntries(
+    Object.entries(v).map(([k, val]) => [k, fixHttps(val)])
+  )
+  return v
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  productCount: number;
+  sortOrder: number;
+}
+export interface Banner {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  link: string;
+  sortOrder: number;
+  enabled: number;
+  audioUrl: string;
+}
+export interface Product {
+  id: string;
+  name: string;
+  image: string;
+  originalPrice: number;
+  discountedPrice: number | null;
+  categoryId: string;
+  description: string;
+  stock: number;
+  tags: string[];
+}
+
+export const api = {
+  banners: () => request<Banner[]>('/banners'),
+  categories: () => request<Category[]>('/categories'),
+  products: () => request<Product[]>('/products'),
+  productById: (id: string) => request<Product>(`/products/${id}`),
+  productsByCategory: (categoryId: string) =>
+    request<Product[]>(`/products/category/${categoryId}`),
+  popular: () => request<Product[]>('/products/popular'),
+  grouped: () => request<Record<string, Product[]>>('/products/grouped'),
+  search: (q: string) => request<Product[]>(`/products/search?q=${encodeURIComponent(q)}`),
+};
