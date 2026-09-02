@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { api, Banner } from './api'
 import { useCartStore, cartSummary } from './cart'
+import { isLoggedIn, getUser, logout } from './auth'
 import './App.css'
 
 function Logo() {
@@ -45,6 +46,32 @@ function CartIcon() {
   )
 }
 
+function UserArea() {
+  const user = getUser()
+  if (user) {
+    return (
+      <div className="user-area" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+        <span className="user-avatar" style={{
+          width: 32, height: 32, borderRadius: 16,
+          background: 'linear-gradient(135deg, #a18cd1, #fbc2eb)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontSize: 14, fontWeight: 700,
+        }}>
+          {(user.nickname || user.username).charAt(0)}
+        </span>
+        <span style={{ fontSize: 13, color: '#333' }}>{user.nickname || user.username}</span>
+        <span
+          onClick={() => { logout(); location.reload() }}
+          style={{ fontSize: 12, color: '#999', cursor: 'pointer', marginLeft: 4 }}
+        >退出</span>
+      </div>
+    )
+  }
+  return (
+    <Link to="/auth" className="user-login-btn">登录 / 注册</Link>
+  )
+}
+
 export default function App() {
   const [banners, setBanners] = useState<Banner[]>([])
   const navigate = useNavigate()
@@ -57,6 +84,7 @@ export default function App() {
           <Logo />
           <SearchBox />
           <CartIcon />
+          <UserArea />
         </div>
       </header>
       <div className="nav">

@@ -65,4 +65,17 @@ export const api = {
   popular: () => request<Product[]>('/products/popular'),
   grouped: () => request<Record<string, Product[]>>('/products/grouped'),
   search: (q: string) => request<Product[]>(`/products/search?q=${encodeURIComponent(q)}`),
+
+  // 用户认证
+  login: (username: string, password: string) =>
+    request<{ token: string; user: { id: string; username: string; nickname: string; role: string; phone: string } }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+  register: (username: string, password: string, nickname?: string, phone?: string) =>
+    request<{ id: string; username: string; role: string }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ username, password, nickname, phone }),
+    }),
+  me: () => request<{ id: string; username: string; nickname: string; role: string }>('/auth/me'),
 };
