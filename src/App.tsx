@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Outlet, Link } from 'react-router-dom'
+import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { api, Banner } from './api'
 import { useCartStore, cartSummary } from './cart'
 import './App.css'
@@ -47,6 +47,7 @@ function CartIcon() {
 
 export default function App() {
   const [banners, setBanners] = useState<Banner[]>([])
+  const navigate = useNavigate()
   useEffect(() => { api.banners().then(setBanners).catch(() => setBanners([])) }, [])
 
   return (
@@ -69,7 +70,7 @@ export default function App() {
         </nav>
       </div>
       <main className="main">
-        <HeroBanner banners={banners} />
+        <HeroBanner banners={banners} navigate={navigate} />
         <Outlet />
       </main>
       <footer className="footer">
@@ -79,7 +80,7 @@ export default function App() {
   )
 }
 
-function HeroBanner({ banners }: { banners: Banner[] }) {
+function HeroBanner({ banners, navigate }: { banners: Banner[]; navigate: (to: string) => void }) {
   const [idx, setIdx] = useState(0)
   const [fade, setFade] = useState(false)
   useEffect(() => {
@@ -92,8 +93,13 @@ function HeroBanner({ banners }: { banners: Banner[] }) {
   }, [banners.length])
   if (banners.length === 0) return null
   const b = banners[idx]
+  const target = mapBannerLink(b.link)
   return (
-    <section className="hero" style={{ backgroundImage: `url(${b.image})` }}>
+    <section
+      className="hero"
+      style={{ backgroundImage: `url(${b.image})`, cursor: target ? 'pointer' : 'default' }}
+      onClick={(e) => { e.preventDefault(); if (target) navigate(target) }}
+    >
       <div className={`hero-overlay ${fade ? 'fade' : ''}`} />
       <div className="hero-content">
         <h1 className="hero-title">{b.title}</h1>
@@ -106,4 +112,17 @@ function HeroBanner({ banners }: { banners: Banner[] }) {
       </div>
     </section>
   )
+}
+
+function mapBannerLink(link?: string): string | null {
+  if (!link) return null
+  // 直接是 web 路由（以 / 开头且不包含 /pages/）
+  if (link.startsWith('/') && !link.includes('/pages/')) return link
+  // 小程序路径 /pages/category/category?type=xxx → /products?cat=xxx
+  const m = link.match(/type=([\w-]+)/)
+  if (m) return `/products?cat=${m[1]}`
+  // 小程序商品详情页 /pages/product/product?id=xxx → /products/xxx
+  const p = link.match(/product\/product\?id=(\w+)/)
+  if (p) return `/products/${p[1]}`
+  return null
 }
