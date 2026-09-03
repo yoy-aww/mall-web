@@ -72,6 +72,18 @@ export interface Review {
   createdAt: string;
 }
 
+export interface Address {
+  id: string;
+  userId: string;
+  label: string;
+  receiverName: string;
+  receiverPhone: string;
+  province: string;
+  city: string;
+  address: string;
+  isDefault: number;
+}
+
 export const api = {
   banners: () => request<Banner[]>('/banners'),
   categories: () => request<Category[]>('/categories'),
@@ -133,4 +145,19 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  // 地址簿
+  addresses: () => request<Address[]>('/addresses'),
+  createAddress: (data: Partial<Address>) =>
+    request<{ id: string }>('/addresses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateAddress: (id: string, data: Partial<Address>) =>
+    request<{ id: string }>(`/addresses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteAddress: (id: string) =>
+    request<{ deleted: string }>(`/addresses/${id}`, { method: 'DELETE' }),
 };

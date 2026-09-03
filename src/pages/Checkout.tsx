@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api } from '../api'
+import { api, Address } from '../api'
 import { getUser } from '../auth'
 import { useCartStore, cartActions, cartSummary, type CartItem } from '../cart'
 import './Checkout.css'
@@ -11,11 +11,30 @@ export default function Checkout() {
   const [step, setStep] = useState<'fill' | 'done'>('fill')
   const [orderId, setOrderId] = useState('')
   const [loading, setLoading] = useState(false)
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [selAddr, setSelAddr] = useState<Address | null>(null)
+  const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     name: '', phone: '', province: '', city: '', address: '', note: '',
   })
+  const [newAddrLabel, setNewAddrLabel] = useState('')
   const navigate = useNavigate()
   const user = getUser()
+
+  useEffect(() => {
+    if (!user) return
+    api.addresses().then(setAddresses).catch(() => setAddresses([]))
+  }, [])
+
+  useEffect(() => {
+    if (!addresses.length) return
+    const def = addresses.find(a => a.isDefault) || addresses[0]
+    setSelAddr(def)
+    setForm({
+      name: def.receiverName, phone: def.receiverPhone,
+      province: def.province, city: def.city, address: def.address, note: '',
+    })
+  }, [addresses])
 
   if (items.length === 0) {
     return (
@@ -56,6 +75,19 @@ export default function Checkout() {
         remark: form.note,
       })
       const result = (res as any).data || res
+
+      // 如果是新地址，保存到地址簿
+      if (showForm) {
+        await api.createAddress({
+          label: newAddrLabel || '新地址',
+          receiverName: form.name,
+          receiverPhone: form.phone,
+          province: form.province,
+          city: form.city,
+          address: form.address,
+        }).catch(() => {})
+      }
+
       setOrderId(result.id)
       setStep('done')
       cartActions.clear()
@@ -66,6 +98,15 @@ export default function Checkout() {
     }
   }
 
+  const pickAddr = (addr: Address) => {
+    setSelAddr(addr)
+    setShowForm(false)
+    setForm({
+      name: addr.receiverName, phone: addr.receiverPhone,
+      province: addr.province, city: addr.city, address: addr.address, note: '',
+    })
+  }
+
   return (
     <div className="checkout-page">
       <h1 className="page-title">确认订单</h1>
@@ -73,14 +114,42 @@ export default function Checkout() {
         <div className="col-left">
           <section className="panel">
             <h3 className="panel-title">收货信息</h3>
-            <div className="form-grid">
-              <label>姓名 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="收货人" /></label>
-              <label>手机 <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="手机号" /></label>
-              <label>省份 <input value={form.province} onChange={e => setForm(f => ({ ...f, province: e.target.value }))} placeholder="省" /></label>
-              <label>城市 <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="市" /></label>
-            </div>
-            <label className="full">详细地址 <input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道/小区/门牌" /></label>
-            <label className="full">备注 <input value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} placeholder="选填" /></label>
+
+            {user && addresses.length > 0 && (
+              <div className="addr-list">
+                {addresses.map(a => (
+                  <div
+                    key={a.id}
+                    className={`addr-item ${selAddr?.id === a.id ? 'on' : ''}`}
+                    onClick={() => pickAddr(a)}
+                  >
+                    <span className="addr-label">{a.label}</span>
+                    {a.isDefault && <span className="addr-badge">默认</span>}
+                    <div className="addr-main">
+                      <span>{a.receiverName} {a.receiverPhone}</span>
+                      <span>{a.province} {a.city} {a.address}</span>
+                    </div>
+                  </div>
+                ))}
+                <button className="addr-new" onClick={() => setShowForm(!showForm)}>
+                  {showForm ? '取消' : '＋ 新建地址'}
+                </button>
+              </div>
+            )}
+
+            {(showForm || !user || addresses.length === 0) && (
+              <div className="form-grid">
+                <label>姓名 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="收货人" /></label>
+                <label>手机 <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="手机号" /></label>
+                <label>省份 <input value={form.province} onChange={e => setForm(f => ({ ...f, province: e.target.value }))} placeholder="省" /></label>
+                <label>城市 <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="市" /></label>
+                <label className="full">详细地址 <input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="街道/小区/门牌" /></label>
+                <label className="full">备注 <input value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} placeholder="选填" /></label>
+                {showForm && (
+                  <label className="full">地址标签 <input value={newAddrLabel} onChange={e => setNewAddrLabel(e.target.value)} placeholder="例如：家 / 公司" /></label>
+                )}
+              </div>
+            )}
           </section>
 
           <section className="panel">

@@ -39,6 +39,31 @@ label input:focus { border-color: var(--brand); outline: none; }
 .empty { text-align: center; padding: 70px 0; color: var(--text-muted); }
 .empty-icon { font-size: 44px; margin-bottom: 12px; }
 
+/* 地址簿 */
+.addr-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.addr-item {
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px;
+  cursor: pointer; transition: all .15s;
+}
+.addr-item:hover { border-color: var(--brand); }
+.addr-item.on { border-color: var(--brand); background: var(--brand-light); }
+.addr-label {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  color: var(--brand); background: var(--brand-light);
+  padding: 2px 8px; border-radius: 4px; margin-right: 8px;
+}
+.addr-badge {
+  display: inline-block; font-size: 10px; color: #ff4d4f;
+  border: 1px solid #ff4d4f; padding: 1px 6px; border-radius: 3px;
+  margin-right: 6px;
+}
+.addr-main { font-size: 13px; color: var(--text); line-height: 1.6; }
+.addr-new {
+  padding: 8px 14px; border: 1px dashed var(--brand); background: transparent;
+  color: var(--brand); border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.addr-new:hover { background: var(--brand-light); }
+
 @media (max-width: 760px) {
   .row { grid-template-columns: 1fr; }
   .done-info { grid-template-columns: 1fr; }

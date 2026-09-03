@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api, Product } from '../api'
+import { api, Product, Address } from '../api'
 import { getUser, setLogin } from '../auth'
 import './Profile.css'
 
-type Tab = 'info' | 'orders'
+type Tab = 'info' | 'addresses' | 'orders'
 
 interface Order {
   id: string; status: string; items: any[]; totalAmount: number;
@@ -25,6 +25,11 @@ export default function Profile() {
   const [tab, setTab] = useState<Tab>('info')
   const [orders, setOrders] = useState<Order[]>([])
   const [loadingOrders, setLoadingOrders] = useState(false)
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [loadingAddresses, setLoadingAddresses] = useState(false)
+  const [addrForm, setAddrForm] = useState({ label: '', name: '', phone: '', province: '', city: '', address: '' })
+  const [addrMode, setAddrMode] = useState<'add' | 'edit'>('add')
+  const [addrEditingId, setAddrEditingId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -45,6 +50,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (tab === 'orders' && user) loadOrders()
+    if (tab === 'addresses' && user) loadAddresses()
   }, [tab, user])
 
   const loadOrders = async () => {
@@ -57,6 +63,18 @@ export default function Profile() {
       setOrders([])
     } finally {
       setLoadingOrders(false)
+    }
+  }
+
+  const loadAddresses = async () => {
+    setLoadingAddresses(true)
+    try {
+      const d = await api.addresses()
+      setAddresses((d as any).data || (Array.isArray(d) ? d : []))
+    } catch {
+      setAddresses([])
+    } finally {
+      setLoadingAddresses(false)
     }
   }
 
@@ -91,7 +109,61 @@ export default function Profile() {
     }
   }
 
-  const handleTab = (t: Tab) => { setTab(t); if (t === 'orders' && user) loadOrders() }
+  const handleTab = (t: Tab) => {
+    setTab(t)
+    if (t === 'orders' && user) loadOrders()
+    if (t === 'addresses' && user) loadAddresses()
+  }
+
+  const openAddrAdd = () => {
+    setAddrMode('add')
+    setAddrEditingId('')
+    setAddrForm({ label: '', name: '', phone: '', province: '', city: '', address: '' })
+  }
+  const openAddrEdit = (a: Address) => {
+    setAddrMode('edit')
+    setAddrEditingId(a.id)
+    setAddrForm({ label: a.label, name: a.receiverName, phone: a.receiverPhone, province: a.province, city: a.city, address: a.address })
+  }
+  const handleAddrSubmit = async () => {
+    if (!addrForm.name || !addrForm.phone || !addrForm.address) { setError('姓名/手机/地址为必填'); return }
+    try {
+      if (addrMode === 'edit' && addrEditingId) {
+        await api.updateAddress(addrEditingId, {
+          label: addrForm.label || '默认',
+          receiverName: addrForm.name,
+          receiverPhone: addrForm.phone,
+          province: addrForm.province,
+          city: addrForm.city,
+          address: addrForm.address,
+        })
+      } else {
+        await api.createAddress({
+          label: addrForm.label || '默认',
+          receiverName: addrForm.name,
+          receiverPhone: addrForm.phone,
+          province: addrForm.province,
+          city: addrForm.city,
+          address: addrForm.address,
+        })
+      }
+      loadAddresses()
+      setAddrMode('add')
+      setAddrEditingId('')
+      setAddrForm({ label: '', name: '', phone: '', province: '', city: '', address: '' })
+    } catch (err: any) {
+      setError(err.message || '操作失败')
+    }
+  }
+  const handleAddrDelete = async (id: string) => {
+    if (!confirm('确定删除此地址？')) return
+    try {
+      await api.deleteAddress(id)
+      loadAddresses()
+    } catch {
+      setError('删除失败')
+    }
+  }
 
   return (
     <div className="profile-page">
@@ -117,6 +189,7 @@ export default function Profile() {
 
           <div className="profile-tabs">
             <button className={`tab ${tab === 'info' ? 'active' : ''}`} onClick={() => handleTab('info')}>个人信息</button>
+            <button className={`tab ${tab === 'addresses' ? 'active' : ''}`} onClick={() => handleTab('addresses')}>收货地址</button>
             <button className={`tab ${tab === 'orders' ? 'active' : ''}`} onClick={() => handleTab('orders')}>我的订单</button>
           </div>
 
@@ -176,6 +249,60 @@ export default function Profile() {
                     <InfoRow label="登录密码" value="********" />
                     <button className="btn btn-outline" onClick={() => setChangingPwd(true)}>修改密码</button>
                   </div>
+                )}
+              </div>
+            )}
+
+            {tab === 'addresses' && (
+              <div className="profile-section">
+                {error && <div className="msg error">{error}</div>}
+
+                <div className="addr-header">
+                  <h3>收货地址</h3>
+                  <button className="btn btn-primary" onClick={openAddrAdd}>＋ 新建</button>
+                </div>
+
+                {loadingAddresses && <p>加载中...</p>}
+
+                {!loadingAddresses && addresses.length === 0 && (
+                  <p style={{ color: '#999', textAlign: 'center', padding: '40px 0' }}>暂无收货地址</p>
+                )}
+
+                {addresses.map(a => (
+                  <div key={a.id} className="addr-card">
+                    <div className="addr-card-top">
+                      <span className="addr-label">{a.label}</span>
+                      {a.isDefault && <span className="addr-badge">默认</span>}
+                    </div>
+                    <div className="addr-main">
+                      <b>{a.receiverName}</b> <span>{a.receiverPhone}</span>
+                      <br/>
+                      <span>{a.province} {a.city} {a.address}</span>
+                    </div>
+                    <div className="addr-card-actions">
+                      <button className="btn btn-ghost" onClick={() => openAddrEdit(a)}>编辑</button>
+                      <button className="btn btn-ghost" style={{ color: '#ff4d4f' }} onClick={() => handleAddrDelete(a.id)}>删除</button>
+                    </div>
+                  </div>
+                ))}
+
+                {(addrMode === 'add' || (addrMode === 'edit' && addrEditingId)) && (
+                  <form className="edit-form" style={{ marginTop: 16 }}>
+                    <div className="form-row">
+                      <label>标签 <input value={addrForm.label} onChange={e => setAddrForm(f => ({ ...f, label: e.target.value }))} placeholder="如：家 / 公司" /></label>
+                      <label>姓名 <input value={addrForm.name} onChange={e => setAddrForm(f => ({ ...f, name: e.target.value }))} placeholder="收件人" /></label>
+                      <label>手机 <input value={addrForm.phone} onChange={e => setAddrForm(f => ({ ...f, phone: e.target.value }))} placeholder="手机号" /></label>
+                      <label>省份 <input value={addrForm.province} onChange={e => setAddrForm(f => ({ ...f, province: e.target.value }))} placeholder="省" /></label>
+                      <label>城市 <input value={addrForm.city} onChange={e => setAddrForm(f => ({ ...f, city: e.target.value }))} placeholder="市" /></label>
+                      <label>详细地址 <input value={addrForm.address} onChange={e => setAddrForm(f => ({ ...f, address: e.target.value }))} placeholder="街道/小区/门牌" /></label>
+                    </div>
+                    <div className="form-actions">
+                      <button type="button" className="btn btn-primary" onClick={handleAddrSubmit}>
+                        {addrMode === 'edit' ? '保存修改' : '添加地址'}
+                      </button>
+                      <button type="button" className="btn btn-ghost" onClick={() => { setAddrMode('add'); setAddrEditingId(''); setError('') }}>取消</button>
+                    </div>
+                  </form>
                 )}
               </div>
             )}
