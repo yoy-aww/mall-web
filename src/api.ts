@@ -1,11 +1,14 @@
 // 统一 API 请求层
-import { getUser } from './auth'
+import { getUser, getToken } from './auth'
 const API_BASE = '/api';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers: { ...headers, ...(init?.headers as object) },
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -54,6 +57,19 @@ export interface Product {
   description: string;
   stock: number;
   tags: string[];
+}
+export interface Review {
+  id: string;
+  productId: string;
+  userId: string;
+  username: string;
+  nickname: string;
+  rating: number;
+  content: string;
+  images: string[];
+  reply?: string;
+  replyAt?: string;
+  createdAt: string;
 }
 
 export const api = {
@@ -104,6 +120,16 @@ export const api = {
     totalAmount: number; shippingAddress: string; receiverName: string; receiverPhone: string; remark?: string;
   }) =>
     request<{ id: string }>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // 评价
+  reviews: (productId: string) => request<Review[]>(`/reviews?productId=${encodeURIComponent(productId)}`),
+  reviewStats: (productId: string) =>
+    request<{ avg: number; total: number; dist: number[] }>(`/reviews/product/${encodeURIComponent(productId)}/stats`),
+  createReview: (data: { productId: string; userId: string; rating: number; content: string }) =>
+    request<{ id: string }>('/reviews', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
