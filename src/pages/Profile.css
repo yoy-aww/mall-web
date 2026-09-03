@@ -138,7 +138,9 @@
   outline: none;
 }
 
-.form-row input:focus { border-color: #667eea; }
+.form-row label input:focus { border-color: #667eea; }
+.form-row select { margin-top: 4px; padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; width: 100%; box-sizing: border-box; }
+.form-row textarea { margin-top: 4px; padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; width: 100%; box-sizing: border-box; }
 
 .form-actions {
   display: flex;

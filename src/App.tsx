@@ -48,9 +48,10 @@ function CartIcon() {
 
 function UserArea() {
   const user = getUser()
+  const navigate = useNavigate()
   if (user) {
     return (
-      <div className="user-area" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+      <div className="user-area" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => navigate('/profile')}>
         <span className="user-avatar" style={{
           width: 32, height: 32, borderRadius: 16,
           background: 'linear-gradient(135deg, #a18cd1, #fbc2eb)',
@@ -61,7 +62,7 @@ function UserArea() {
         </span>
         <span style={{ fontSize: 13, color: '#333' }}>{user.nickname || user.username}</span>
         <span
-          onClick={() => { logout(); location.reload() }}
+          onClick={(e) => { e.stopPropagation(); logout(); navigate('/') }}
           style={{ fontSize: 12, color: '#999', cursor: 'pointer', marginLeft: 4 }}
         >退出</span>
       </div>

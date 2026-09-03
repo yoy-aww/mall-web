@@ -84,6 +84,21 @@ export interface Address {
   isDefault: number;
 }
 
+export interface AfterSale {
+  id: string;
+  orderId: string;
+  userId: string;
+  orderStatus: string;
+  items: { productId: string; productName: string; quantity: number }[];
+  reason: string;
+  description: string;
+  images: string[];
+  status: string;
+  handleReason?: string;
+  createdAt: string;
+  handledAt?: string;
+}
+
 export const api = {
   banners: () => request<Banner[]>('/banners'),
   categories: () => request<Category[]>('/categories'),
@@ -160,4 +175,12 @@ export const api = {
     }),
   deleteAddress: (id: string) =>
     request<{ deleted: string }>(`/addresses/${id}`, { method: 'DELETE' }),
+
+  // 售后
+  aftersales: () => request<AfterSale[]>('/aftersales'),
+  createAfterSale: (data: { orderId: string; items: { productId: string; productName: string; quantity: number }[]; reason: string; description: string }) =>
+    request<{ id: string }>('/aftersales', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };

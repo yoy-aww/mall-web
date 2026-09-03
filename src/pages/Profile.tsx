@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api, Product, Address } from '../api'
+import { api, Product, Address, AfterSale } from '../api'
 import { getUser, setLogin } from '../auth'
 import './Profile.css'
 
-type Tab = 'info' | 'addresses' | 'orders'
+type Tab = 'info' | 'addresses' | 'aftersales' | 'orders'
 
 interface Order {
   id: string; status: string; items: any[]; totalAmount: number;
@@ -21,6 +21,12 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   cancelled: { label: '已取消', color: '#ff4d4f' },
 }
 
+const AFTERSALE_STATUS: Record<string, { label: string; color: string }> = {
+  pending: { label: '待审核', color: '#fa8c16' },
+  approved: { label: '已同意', color: '#52c41a' },
+  rejected: { label: '已拒绝', color: '#ff4d4f' },
+}
+
 export default function Profile() {
   const [tab, setTab] = useState<Tab>('info')
   const [orders, setOrders] = useState<Order[]>([])
@@ -30,6 +36,12 @@ export default function Profile() {
   const [addrForm, setAddrForm] = useState({ label: '', name: '', phone: '', province: '', city: '', address: '' })
   const [addrMode, setAddrMode] = useState<'add' | 'edit'>('add')
   const [addrEditingId, setAddrEditingId] = useState('')
+
+  // 售后状态
+  const [aftersales, setAftersales] = useState<AfterSale[]>([])
+  const [loadingAftersales, setLoadingAftersales] = useState(false)
+  const [showAfterForm, setShowAfterForm] = useState(false)
+  const [afterForm, setAfterForm] = useState({ orderId: '', reason: '', description: '', reasonOptions: ['口味不符', '漏发', '物流破损', '质量问题', '其他'] as const })
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -51,6 +63,7 @@ export default function Profile() {
   useEffect(() => {
     if (tab === 'orders' && user) loadOrders()
     if (tab === 'addresses' && user) loadAddresses()
+    if (tab === 'aftersales' && user) loadAftersales()
   }, [tab, user])
 
   const loadOrders = async () => {
@@ -75,6 +88,18 @@ export default function Profile() {
       setAddresses([])
     } finally {
       setLoadingAddresses(false)
+    }
+  }
+
+  const loadAftersales = async () => {
+    setLoadingAftersales(true)
+    try {
+      const d = await api.aftersales()
+      setAftersales((d as any).data || (Array.isArray(d) ? d : []))
+    } catch {
+      setAftersales([])
+    } finally {
+      setLoadingAftersales(false)
     }
   }
 
@@ -113,6 +138,7 @@ export default function Profile() {
     setTab(t)
     if (t === 'orders' && user) loadOrders()
     if (t === 'addresses' && user) loadAddresses()
+    if (t === 'aftersales' && user) loadAftersales()
   }
 
   const openAddrAdd = () => {
@@ -190,6 +216,7 @@ export default function Profile() {
           <div className="profile-tabs">
             <button className={`tab ${tab === 'info' ? 'active' : ''}`} onClick={() => handleTab('info')}>个人信息</button>
             <button className={`tab ${tab === 'addresses' ? 'active' : ''}`} onClick={() => handleTab('addresses')}>收货地址</button>
+            <button className={`tab ${tab === 'aftersales' ? 'active' : ''}`} onClick={() => handleTab('aftersales')}>售后</button>
             <button className={`tab ${tab === 'orders' ? 'active' : ''}`} onClick={() => handleTab('orders')}>我的订单</button>
           </div>
 
@@ -301,6 +328,84 @@ export default function Profile() {
                         {addrMode === 'edit' ? '保存修改' : '添加地址'}
                       </button>
                       <button type="button" className="btn btn-ghost" onClick={() => { setAddrMode('add'); setAddrEditingId(''); setError('') }}>取消</button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {tab === 'aftersales' && (
+              <div className="profile-section">
+                <div className="addr-header">
+                  <h3>售后服务</h3>
+                  <button className="btn btn-primary" onClick={() => setShowAfterForm(!showAfterForm)}>
+                    {showAfterForm ? '取消' : '＋ 申请售后'}
+                  </button>
+                </div>
+
+                {loadingAftersales && <p>加载中...</p>}
+
+                {!loadingAftersales && aftersales.length === 0 && (
+                  <p style={{ color: '#999', textAlign: 'center', padding: '40px 0' }}>暂无售后记录</p>
+                )}
+
+                {aftersales.map(a => (
+                  <div key={a.id} className="addr-card">
+                    <div className="addr-card-top">
+                      <span className="addr-label">{a.reason}</span>
+                      <span className="af-status" style={{
+                        backgroundColor: AFTERSALE_STATUS[a.status]?.color + '20' || '#f0f0f0',
+                        color: AFTERSALE_STATUS[a.status]?.color || '#666',
+                        padding: '2px 8px', borderRadius: 4, fontSize: 11,
+                      }}>
+                        {AFTERSALE_STATUS[a.status]?.label || a.status}
+                      </span>
+                    </div>
+                    <div className="addr-main">
+                      <span>订单：{a.orderId}</span><br/>
+                      {a.description && <span>{a.description}</span>}
+                    </div>
+                    {a.handleReason && (
+                      <div style={{ fontSize: 12, color: '#13c2c2', marginTop: 4 }}>
+                        处理：{a.handleReason}
+                        {a.handledAt && <span style={{ color: '#bbb', marginLeft: 8 }}>{a.handledAt}</span>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {showAfterForm && (
+                  <form className="edit-form" style={{ marginTop: 16 }} onSubmit={e => {
+                    e.preventDefault()
+                    if (!afterForm.reason || !afterForm.description) { setError('原因为必填'); return }
+                    api.createAfterSale({
+                      orderId: afterForm.orderId,
+                      items: [],
+                      reason: afterForm.reason,
+                      description: afterForm.description,
+                    }).then(() => {
+                      loadAftersales()
+                      setShowAfterForm(false)
+                      setAfterForm({ ...afterForm, orderId: '', reason: '', description: '' })
+                    }).catch((err: any) => setError(err.message || '申请失败'))
+                  }}>
+                    <div className="form-row">
+                      <label>订单号 <input value={afterForm.orderId} onChange={e => setAfterForm(f => ({ ...f, orderId: e.target.value }))} placeholder="输入订单号" /></label>
+                      <label>售后原因
+                        <select value={afterForm.reason} onChange={e => setAfterForm(f => ({ ...f, reason: e.target.value }))}>
+                          <option value="">请选择</option>
+                          <option value="口味不符">口味不符</option>
+                          <option value="漏发">漏发</option>
+                          <option value="物流破损">物流破损</option>
+                          <option value="质量问题">质量问题</option>
+                          <option value="其他">其他</option>
+                        </select>
+                      </label>
+                      <label className="full">说明 <textarea value={afterForm.description} onChange={e => setAfterForm(f => ({ ...f, description: e.target.value }))} rows={3} placeholder="详细描述问题" style={{ fontFamily: 'inherit', resize: 'vertical' }} /></label>
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn btn-primary">提交申请</button>
+                      <button type="button" className="btn btn-ghost" onClick={() => { setShowAfterForm(false); setError('') }}>取消</button>
                     </div>
                   </form>
                 )}
