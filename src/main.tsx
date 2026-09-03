@@ -11,6 +11,7 @@ import SearchResult from './pages/SearchResult'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import Profile from './pages/Profile'
+import Pay from './pages/Pay'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -19,6 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/auth" element={<Auth />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/pay/:orderId" element={<Pay />} />
         <Route path="/" element={<App />}>
           <Route index element={<Home />} />
           <Route path="products" element={<ProductList />} />

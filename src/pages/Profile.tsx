@@ -212,6 +212,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 function OrderCard({ order }: { order: Order }) {
+  const navigate = useNavigate()
   const s = STATUS_LABELS[order.status] || { label: order.status, color: '#999' }
   return (
     <div className="order-card">
@@ -245,6 +246,31 @@ function OrderCard({ order }: { order: Order }) {
           <span className="order-amount">¥{order.totalAmount.toFixed(2)}</span>
         </div>
       </div>
+
+      {order.status === 'pending' && (
+        <div className="order-actions">
+          <button
+            className="btn btn-outline order-cancel-btn"
+            onClick={() => {
+              if (confirm('确定取消此订单？')) {
+                fetch(`/api/orders/${order.id}/status`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: 'cancelled' }),
+                })
+              }
+            }}
+          >
+            取消订单
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate(`/pay/${order.id}`)}
+          >
+            去支付
+          </button>
+        </div>
+      )}
 
       <div className="order-meta">
         <span>下单：{order.createdAt}</span>
