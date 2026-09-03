@@ -1,4 +1,5 @@
 // 统一 API 请求层
+import { getUser } from './auth'
 const API_BASE = '/api';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -78,4 +79,32 @@ export const api = {
       body: JSON.stringify({ username, password, nickname, phone }),
     }),
   me: () => request<{ id: string; username: string; nickname: string; role: string }>('/auth/me'),
+
+  // 用户信息
+  updateMe: (data: { nickname?: string; phone?: string }) => {
+    const uid = getUser()?.id || '';
+    return request<{ id: string }>(`/auth/users/${uid}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+  changePassword: (oldPassword: string, newPassword: string) =>
+    request<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ oldPassword, newPassword }),
+    }),
+
+  // 订单
+  myOrders: () => {
+    const uid = getUser()?.id;
+    return request<any[]>(`/orders${uid ? `?userId=${uid}` : ''}`);
+  },
+  createOrder: (data: {
+    userId: string; items: { productId: string; productName: string; productImage: string; price: number; quantity: number }[];
+    totalAmount: number; shippingAddress: string; receiverName: string; receiverPhone: string; remark?: string;
+  }) =>
+    request<{ id: string }>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };

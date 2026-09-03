@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { api } from '../api'
+import { getUser } from '../auth'
 import { useCartStore, cartActions, cartSummary, type CartItem } from '../cart'
 import './Checkout.css'
 
@@ -7,9 +9,13 @@ export default function Checkout() {
   const items = useCartStore()
   const { total } = cartSummary(items)
   const [step, setStep] = useState<'fill' | 'done'>('fill')
+  const [orderId, setOrderId] = useState('')
+  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     name: '', phone: '', province: '', city: '', address: '', note: '',
   })
+  const navigate = useNavigate()
+  const user = getUser()
 
   if (items.length === 0) {
     return (
@@ -24,7 +30,41 @@ export default function Checkout() {
     )
   }
 
-  if (step === 'done') return <OrderDone goods={items} total={total} form={form} />
+  if (step === 'done') return <OrderDone goods={items} total={total} form={form} orderId={orderId} />
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.phone || !form.address) { alert('请补全收货人/手机/地址'); return }
+    if (!user) { navigate('/auth?from=/checkout'); return }
+
+    setLoading(true)
+    try {
+      const orderItems = items.map(it => ({
+        productId: it.id,
+        productName: it.name,
+        productImage: it.image,
+        price: it.price,
+        quantity: it.quantity,
+      }))
+      const shipAddr = `${form.province} ${form.city} ${form.address}`.trim()
+      const res = await api.createOrder({
+        userId: user.id,
+        items: orderItems,
+        totalAmount: total >= 199 ? total : total + 8,
+        shippingAddress: shipAddr,
+        receiverName: form.name,
+        receiverPhone: form.phone,
+        remark: form.note,
+      })
+      const result = (res as any).data || res
+      setOrderId(result.id)
+      setStep('done')
+      cartActions.clear()
+    } catch (err: any) {
+      alert(err.message || '下单失败')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="checkout-page">
@@ -75,19 +115,16 @@ export default function Checkout() {
             <div className="sum-line big"><span>应付</span><span>¥{(total >= 199 ? total : total + 8).toFixed(2)}</span></div>
           </section>
 
-          <button className="btn btn-primary full-btn" onClick={() => {
-            if (!form.name || !form.phone || !form.address) { alert('请补全收货人/手机/地址'); return }
-            setStep('done')
-            cartActions.clear()
-          }}>提交订单</button>
+          <button className="btn btn-primary full-btn" onClick={handleSubmit} disabled={loading}>
+            {loading ? '提交中...' : '提交订单'}
+          </button>
         </div>
       </div>
     </div>
   )
 }
 
-function OrderDone({ goods, total, form }: { goods: CartItem[]; total: number; form: any }) {
-  const id = 'GD' + Date.now().toString(36).toUpperCase()
+function OrderDone({ goods, total, form, orderId }: { goods: CartItem[]; total: number; form: any; orderId: string }) {
   return (
     <div className="checkout-page">
       <div className="done">
@@ -95,7 +132,7 @@ function OrderDone({ goods, total, form }: { goods: CartItem[]; total: number; f
         <h2>下单成功</h2>
         <p className="done-sub">感谢选购，订单将尽快为您配货发出</p>
         <div className="done-info">
-          <div><span>订单号</span><b>{id}</b></div>
+          <div><span>订单号</span><b>{orderId}</b></div>
           <div><span>收货人</span><b>{form.name} {form.phone}</b></div>
           <div><span>送达</span><b>{form.province} {form.city} {form.address}</b></div>
           <div><span>商品数</span><b>{goods.reduce((s, x) => s + x.quantity, 0)} 件</b></div>
@@ -103,7 +140,7 @@ function OrderDone({ goods, total, form }: { goods: CartItem[]; total: number; f
         </div>
         <div className="done-links">
           <Link to="/" className="btn btn-ghost">继续逛逛</Link>
-          <Link to="/" className="btn btn-primary">查看订单</Link>
+          <Link to="/profile?tab=orders" className="btn btn-primary">查看订单</Link>
         </div>
       </div>
     </div>

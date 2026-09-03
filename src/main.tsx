@@ -10,6 +10,7 @@ import ProductDetail from './pages/ProductDetail'
 import SearchResult from './pages/SearchResult'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
+import Profile from './pages/Profile'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/auth" element={<Auth />} />
         <Route path="/login" element={<Auth />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/" element={<App />}>
           <Route index element={<Home />} />
           <Route path="products" element={<ProductList />} />
