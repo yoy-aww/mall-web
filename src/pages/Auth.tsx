@@ -17,7 +17,7 @@ export default function Auth() {
   const from = params.get('from') || '/'
 
   useEffect(() => {
-    if (from === 'checkout') setSuccessMsg('登录后继续下单')
+    if (from === '/checkout') setSuccessMsg('登录后继续下单')
   }, [from])
 
   const handleSubmit = async (e: React.FormEvent) => {

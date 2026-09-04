@@ -155,7 +155,7 @@ export const api = {
   },
   createOrder: (data: {
     userId: string; items: { productId: string; productName: string; productImage: string; price: number; quantity: number }[];
-    totalAmount: number; shippingAddress: string; receiverName: string; receiverPhone: string; remark?: string;
+    totalAmount: number; shippingAddress: string; receiverName: string; receiverPhone: string; remark?: string; shippingMethod?: 'standard' | 'sfx';
   }) =>
     request<{ id: string }>('/orders', {
       method: 'POST',

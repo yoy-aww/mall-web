@@ -10,6 +10,7 @@ export default function ProductDetail() {
   const [p, setP] = useState<Product | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState({ avg: 0, total: 0, dist: [0, 0, 0, 0, 0] })
+  const [categoryName, setCategoryName] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ rating: 5, content: '' })
   const [hover, setHover] = useState(0)
@@ -19,7 +20,13 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!id) return
-    api.productById(id).then(setP).catch(() => setP(null))
+    api.productById(id).then(p => {
+      setP(p)
+      if (p?.categoryId) api.categories().then(cs => {
+        const c = cs.find(x => x.id === p.categoryId)
+        if (c) setCategoryName(c.name)
+      }).catch(() => {})
+    }).catch(() => setP(null))
     loadReviews()
   }, [id])
 
@@ -65,7 +72,7 @@ export default function ProductDetail() {
             {(p.tags || []).map(t => <span key={t} className="tag">{t}</span>)}
           </div>
           <h1 className="detail-name">{p.name}</h1>
-          <p className="detail-cat">分类：{p.categoryId}</p>
+          <p className="detail-cat">分类：{categoryName}</p>
           <div className="detail-price-block">
             <span className="now">¥{price}</span>
             {p.discountedPrice && <span className="old">¥{p.originalPrice}</span>}

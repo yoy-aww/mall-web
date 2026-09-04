@@ -6,11 +6,24 @@ import './Home.css'
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([])
   const [popular, setPopular] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.categories().then(setCategories).catch(() => setCategories([]))
-    api.popular().then(setPopular).catch(() => setPopular([]))
+    Promise.all([api.categories(), api.popular()])
+      .then(([cs, ps]) => { setCategories(cs); setPopular(ps); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
+
+  if (loading) {
+    return (
+      <div className="home">
+        <div style={{ textAlign: 'center', padding: '120px 0', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: 24, marginBottom: 12 }}>🍵</div>
+          <div>加载中…</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="home">

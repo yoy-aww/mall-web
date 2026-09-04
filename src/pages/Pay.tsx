@@ -14,6 +14,11 @@ export default function Pay() {
   // 加载订单
   useEffect(() => {
     if (!orderId) return
+    // 未登录时引导登录，不加载订单
+    if (!getToken()) {
+      setStep('timeout')
+      return
+    }
     fetch(`/api/orders/${orderId}`, {
       headers: { 'Content-Type': 'application/json', ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}) },
     })

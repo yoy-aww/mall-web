@@ -9,6 +9,7 @@ export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const fetch = async () => {
@@ -17,7 +18,7 @@ export default function ProductList() {
       setCategories(cs)
       setLoading(false)
     }
-    fetch().catch(() => { setLoading(false); setProducts([]) })
+    fetch().catch(() => { setLoading(false); setError('加载失败，请稍后重试') })
   }, [])
 
   const filtered = useMemo(() => {
@@ -53,6 +54,8 @@ export default function ProductList() {
             </div>
           ))}
         </div>
+      ) : error ? (
+        <div className="empty">😵 {error}</div>
       ) : filtered.length === 0 ? (
         <div className="empty">暂无商品</div>
       ) : (
