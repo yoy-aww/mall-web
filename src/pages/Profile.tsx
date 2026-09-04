@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api, Product, Address, AfterSale } from '../api'
+import { api, Product, Address, AfterSale, Notification } from '../api'
 import { getUser, setLogin } from '../auth'
 import './Profile.css'
 
-type Tab = 'info' | 'addresses' | 'aftersales' | 'orders'
+type Tab = 'info' | 'addresses' | 'aftersales' | 'orders' | 'notifications'
 
 interface Order {
   id: string; status: string; items: any[]; totalAmount: number;
@@ -42,6 +42,11 @@ export default function Profile() {
   const [loadingAftersales, setLoadingAftersales] = useState(false)
   const [showAfterForm, setShowAfterForm] = useState(false)
   const [afterForm, setAfterForm] = useState({ orderId: '', reason: '', description: '', reasonOptions: ['口味不符', '漏发', '物流破损', '质量问题', '其他'] as const })
+
+  // 通知
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loadingNotif, setLoadingNotif] = useState(false)
+
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -64,6 +69,7 @@ export default function Profile() {
     if (tab === 'orders' && user) loadOrders()
     if (tab === 'addresses' && user) loadAddresses()
     if (tab === 'aftersales' && user) loadAftersales()
+    if (tab === 'notifications' && user) loadNotifications()
   }, [tab, user])
 
   const loadOrders = async () => {
@@ -101,6 +107,33 @@ export default function Profile() {
     } finally {
       setLoadingAftersales(false)
     }
+  }
+
+  const loadNotifications = async () => {
+    setLoadingNotif(true)
+    try {
+      const d = await api.getNotifications()
+      const res = (d as any).data || d
+      setNotifications(Array.isArray(res.list) ? res.list : [])
+    } catch {
+      setNotifications([])
+    } finally {
+      setLoadingNotif(false)
+    }
+  }
+
+  const markRead = async (id: string) => {
+    try {
+      await api.markRead(id)
+      setNotifications(list => list.map(n => n.id === id ? { ...n, read: 1 } : n))
+    } catch { /* ignore */ }
+  }
+
+  const markAllRead = async () => {
+    try {
+      await api.markAllRead()
+      setNotifications(list => list.map(n => ({ ...n, read: 1 })))
+    } catch { /* ignore */ }
   }
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -218,6 +251,7 @@ export default function Profile() {
             <button className={`tab ${tab === 'addresses' ? 'active' : ''}`} onClick={() => handleTab('addresses')}>收货地址</button>
             <button className={`tab ${tab === 'aftersales' ? 'active' : ''}`} onClick={() => handleTab('aftersales')}>售后</button>
             <button className={`tab ${tab === 'orders' ? 'active' : ''}`} onClick={() => handleTab('orders')}>我的订单</button>
+            <button className={`tab ${tab === 'notifications' ? 'active' : ''}`} onClick={() => handleTab('notifications')}>消息通知</button>
           </div>
 
           <div className="profile-body">
@@ -409,6 +443,31 @@ export default function Profile() {
                     </div>
                   </form>
                 )}
+              </div>
+            )}
+
+            {tab === 'notifications' && (
+              <div className="profile-section">
+                <div className="addr-header">
+                  <h3>消息通知</h3>
+                  {notifications.length > 0 && (
+                    <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={markAllRead}>全部已读</button>
+                  )}
+                </div>
+                {loadingNotif && <p>加载中...</p>}
+                {!loadingNotif && notifications.length === 0 && (
+                  <p style={{ color: '#999', textAlign: 'center', padding: '40px 0' }}>暂无消息</p>
+                )}
+                {notifications.map(n => (
+                  <div key={n.id} className="addr-card" style={{ opacity: n.read ? 0.6 : 1, position: 'relative' }}>
+                    {!n.read && <span style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: 4, background: '#ff4d4f' }} />}
+                    <div className="addr-card-top">
+                      <span className="addr-label">{n.title}</span>
+                      <span style={{ fontSize: 11, color: '#999' }}>{n.createdAt}</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: '#555', margin: '6px 0 0' }}>{n.content}</p>
+                  </div>
+                ))}
               </div>
             )}
 

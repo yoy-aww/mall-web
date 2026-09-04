@@ -19,7 +19,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/auth" element={<Auth />} />
         <Route path="/login" element={<Auth />} />
-        <Route path="/profile" element={<Profile />} />
         <Route path="/pay/:orderId" element={<Pay />} />
         <Route path="/" element={<App />}>
           <Route index element={<Home />} />
@@ -28,6 +27,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="search" element={<SearchResult />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -47,8 +47,8 @@
 
 .profile-sep { color: #ddd; }
 .profile-role {
-  background: #fde3e3;
-  color: #cf1322;
+  background: var(--brand-light);
+  color: var(--brand);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -75,10 +75,10 @@
   transition: all 0.2s;
 }
 
-.profile-tabs .tab:hover { color: #667eea; }
+.profile-tabs .tab:hover { color: var(--brand); }
 .profile-tabs .tab.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
+  color: var(--brand);
+  border-bottom-color: var(--brand);
 }
 
 .profile-section {

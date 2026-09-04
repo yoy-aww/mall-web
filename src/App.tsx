@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Outlet, Link, useNavigate } from 'react-router-dom'
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { api, Banner } from './api'
 import { useCartStore, cartSummary } from './cart'
-import { isLoggedIn, getUser, logout } from './auth'
+import { isLoggedIn, getUser, getToken, logout } from './auth'
 import './App.css'
 
 function Logo() {
@@ -73,9 +73,57 @@ function UserArea() {
   )
 }
 
+function NotifyIcon() {
+  const [unread, setUnread] = useState(0)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!getToken()) return
+    const t = setInterval(async () => {
+      try {
+        const d = await api.getNotifications()
+        setUnread((d as any).data?.unread ?? (d as any).unread ?? 0)
+      } catch { /* ignore */ }
+    }, 30000)
+    const load = async () => {
+      try {
+        const d = await api.getNotifications()
+        setUnread((d as any).data?.unread ?? (d as any).unread ?? 0)
+      } catch { /* ignore */ }
+    }
+    load()
+    return () => clearInterval(t)
+  }, [])
+
+  if (!getToken()) return null
+  return (
+    <span
+      style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+      onClick={() => navigate('/profile')}
+      title="消息通知"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+      </svg>
+      {unread > 0 && (
+        <span style={{
+          position: 'absolute', top: -4, right: -6,
+          backgroundColor: '#ff4d4f', color: '#fff',
+          fontSize: 10, fontWeight: 700,
+          padding: '1px 5px', borderRadius: 8,
+          minWidth: 16, textAlign: 'center',
+        }}>{unread > 99 ? '99+' : unread}</span>
+      )}
+    </span>
+  )
+}
+
 export default function App() {
   const [banners, setBanners] = useState<Banner[]>([])
   const navigate = useNavigate()
+  const location = useLocation()
+  const showBanner = location.pathname === '/'
   useEffect(() => { api.banners().then(setBanners).catch(() => setBanners([])) }, [])
 
   return (
@@ -85,6 +133,7 @@ export default function App() {
           <Logo />
           <SearchBox />
           <CartIcon />
+          <NotifyIcon />
           <UserArea />
         </div>
       </header>
@@ -96,10 +145,11 @@ export default function App() {
           <Link to="/products?cat=herbs" className="nav-link">中药材</Link>
           <Link to="/products?cat=health" className="nav-link">保健品</Link>
           <Link to="/products?cat=activity" className="nav-link">活动专区</Link>
+          <Link to="/profile" className="nav-link nav-profile-link">个人中心</Link>
         </nav>
       </div>
       <main className="main">
-        <HeroBanner banners={banners} navigate={navigate} />
+        {showBanner && <HeroBanner banners={banners} navigate={navigate} />}
         <Outlet />
       </main>
       <footer className="footer">

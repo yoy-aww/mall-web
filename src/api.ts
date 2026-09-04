@@ -99,6 +99,17 @@ export interface AfterSale {
   handledAt?: string;
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  content: string;
+  relatedId?: string;
+  read: number;
+  createdAt: string;
+}
+
 export const api = {
   banners: () => request<Banner[]>('/banners'),
   categories: () => request<Category[]>('/categories'),
@@ -183,4 +194,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  // 消息通知
+  getNotifications: () => request<{ list: Notification[]; unread: number }>('/notifications'),
+  markRead: (id: string) => request<{ id: string }>(`/notifications/${id}/read`, { method: 'PUT' }),
+  markAllRead: () => request<{ read: boolean }>('/notifications/all/read', { method: 'PUT' }),
 };
