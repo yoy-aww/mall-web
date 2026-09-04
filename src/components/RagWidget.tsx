@@ -2,12 +2,24 @@ import { useState, useRef, useEffect } from 'react'
 import './RagWidget.css'
 
 const RAG_URL = import.meta.env.VITE_RAG_URL || 'http://localhost:8000'
-const SHOW_SOURCES = false  // 是否显示回答下方的来源引用
+const MALL_API = '/api'
+const SHOW_SOURCES = true
+
+interface Product {
+  id: string
+  name: string
+  image: string
+  discountedPrice?: number
+  originalPrice: number
+  stock: number
+}
 
 interface Message {
   role: 'user' | 'ai'
   text: string
   sources?: { doc: string; score: number; text: string }[]
+  product_ids?: string[]
+  products?: Product[]
 }
 
 export default function RagWidget() {
@@ -36,7 +48,17 @@ export default function RagWidget() {
         body: JSON.stringify({ question: q }),
       })
       const data = await res.json()
-      setMsgs(m => [...m, { role: 'ai', text: data.answer || '（无回答）', sources: data.sources }])
+      // 如果有商品 ID，先查商品详情
+      let items: Product[] = []
+      if (data.product_ids && data.product_ids.length > 0) {
+        const details = await Promise.all(
+          data.product_ids.map(id =>
+            fetch(`${MALL_API}/products/${id}`).then(r => r.json()).catch(() => null)
+          )
+        )
+        items = details.filter((r): r is any => r && r.success).map(r => r.data)
+      }
+      setMsgs(m => [...m, { role: 'ai', text: data.answer || '（无回答）', sources: data.sources, product_ids: data.product_ids, products: items }])
     } catch {
       setError('RAG 服务未响应，请检查 localhost:8000')
     } finally {
@@ -85,6 +107,27 @@ export default function RagWidget() {
                           <span className="rag-source-tag">{s.doc}</span>
                           <span className="rag-source-text">{s.text.length > 80 ? s.text.slice(0, 80) + '…' : s.text}</span>
                         </div>
+                      ))}
+                    </div>
+                  )}
+                  {m.products && m.products.length > 0 && (
+                    <div className="rag-products">
+                      <div className="rag-products-title">🛒 推荐商品</div>
+                      {m.products.map(p => (
+                        <a key={p.id} className="rag-product-card" href={`/products/${p.id}`} onClick={() => setOpen(false)}>
+                          <img className="rag-product-img" src={p.image} alt={p.name} onError={e => (e.target.style.display = 'none')} />
+                          <div className="rag-product-info">
+                            <div className="rag-product-name">{p.name}</div>
+                            <div className="rag-product-price">
+                              {p.discountedPrice ? (
+                                <><span>¥{p.discountedPrice}</span><del>¥{p.originalPrice}</del></>
+                              ) : (
+                                <span>¥{p.originalPrice}</span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="rag-product-go">查看 →</span>
+                        </a>
                       ))}
                     </div>
                   )}

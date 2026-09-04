@@ -28,14 +28,8 @@ const AFTERSALE_STATUS: Record<string, { label: string; color: string }> = {
 }
 
 export default function Profile() {
-  const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'info')
-
-  // URL 变化时同步 tab（从通知页/订单页跳过来时能正确切 tab）
-  useEffect(() => {
-    const t = searchParams.get('tab') as Tab | null
-    if (t && ['info','addresses','aftersales','orders','notifications'].includes(t)) setTab(t)
-  }, [searchParams])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab: Tab = (searchParams.get('tab') as Tab) || 'info'
   const [orders, setOrders] = useState<Order[]>([])
   const [loadingOrders, setLoadingOrders] = useState(false)
   const [addresses, setAddresses] = useState<Address[]>([])
@@ -175,7 +169,7 @@ export default function Profile() {
   }
 
   const handleTab = (t: Tab) => {
-    setTab(t)
+    setSearchParams({ tab: t }, { replace: true })
     if (t === 'orders' && user) loadOrders()
     if (t === 'addresses' && user) loadAddresses()
     if (t === 'aftersales' && user) loadAftersales()

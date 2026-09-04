@@ -214,6 +214,74 @@
   text-align: center;
 }
 
+/* 推荐商品 */
+.rag-products {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.rag-products-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  margin-bottom: 8px;
+}
+.rag-product-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  text-decoration: none;
+  color: #333;
+  transition: background 0.15s, border-color 0.15s;
+}
+.rag-product-card:hover {
+  background: var(--brand-light);
+  border-color: var(--brand);
+}
+.rag-product-img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #f0f0f0;
+}
+.rag-product-info {
+  flex: 1;
+  min-width: 0;
+}
+.rag-product-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.rag-product-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.rag-product-price del {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.rag-product-go {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--brand);
+  font-weight: 500;
+}
+
 /* ── 输入区 ── */
 .rag-footer {
   display: flex;
