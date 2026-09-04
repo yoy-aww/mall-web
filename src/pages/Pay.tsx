@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import { getToken } from '../auth'
 import './Pay.css'
 
 export default function Pay() {
@@ -13,7 +14,9 @@ export default function Pay() {
   // 加载订单
   useEffect(() => {
     if (!orderId) return
-    fetch(`/api/orders/${orderId}`, { headers: { 'Content-Type': 'application/json' } })
+    fetch(`/api/orders/${orderId}`, {
+      headers: { 'Content-Type': 'application/json', ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}) },
+    })
       .then(r => r.json())
       .then(d => {
         const data = (d as any).data || d
@@ -48,7 +51,10 @@ export default function Pay() {
     try {
       const res = await fetch(`/api/orders/${orderId}/payment`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+        },
         body: JSON.stringify({}),
       })
       const d = await res.json()
