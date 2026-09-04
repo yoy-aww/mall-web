@@ -33,9 +33,10 @@ export default function Auth() {
         setLogin(result.token, result.user)
         navigate(from)
       } else {
-        await api.register(form.username, form.password, form.nickname, form.phone)
-        setMode('login')
-        setSuccessMsg('注册成功，请登录')
+        const d = await api.register(form.username, form.password, form.nickname, form.phone)
+        const result = (d as any).data || d
+        setLogin(result.token, result.user)
+        navigate(from)
       }
     } catch (err: any) {
       setError(err.message || '操作失败')
