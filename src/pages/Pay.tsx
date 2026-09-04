@@ -18,9 +18,9 @@ export default function Pay() {
       .then(d => {
         const data = (d as any).data || d
         if (!data.success) return
-        setAmount(data.data.totalAmount)
-        setOrderStatus(data.data.status)
-        if (data.data.status !== 'pending') {
+        setAmount(data.totalAmount)
+        setOrderStatus(data.status)
+        if (data.status !== 'pending') {
           setStep('already')
         }
       })
