@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api, Product, Address, AfterSale, Notification } from '../api'
-import { getUser, setLogin } from '../auth'
+import { getUser, setLogin, getToken } from '../auth'
 import './Profile.css'
 
 type Tab = 'info' | 'addresses' | 'aftersales' | 'orders' | 'notifications'
@@ -144,7 +144,8 @@ export default function Profile() {
     try {
       await api.updateMe({ nickname: editForm.nickname, phone: editForm.phone })
       const oldUser = getUser()!
-      setLogin(getUser()!.token!, { ...oldUser, nickname: editForm.nickname, phone: editForm.phone })
+      const token = getToken()!
+      setLogin(token, { ...oldUser, nickname: editForm.nickname, phone: editForm.phone })
       setMessage('个人信息已更新')
       setEditing(false)
     } catch (err: any) {

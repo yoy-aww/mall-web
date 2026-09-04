@@ -52,7 +52,7 @@ export default function RagWidget() {
       let items: Product[] = []
       if (data.product_ids && data.product_ids.length > 0) {
         const details = await Promise.all(
-          data.product_ids.map(id =>
+          data.product_ids.map((id: string) =>
             fetch(`${MALL_API}/products/${id}`).then(r => r.json()).catch(() => null)
           )
         )
@@ -115,7 +115,7 @@ export default function RagWidget() {
                       <div className="rag-products-title">🛒 推荐商品</div>
                       {m.products.map(p => (
                         <a key={p.id} className="rag-product-card" href={`/products/${p.id}`} onClick={() => setOpen(false)}>
-                          <img className="rag-product-img" src={p.image} alt={p.name} onError={e => (e.target.style.display = 'none')} />
+                          <img className="rag-product-img" src={p.image} alt={p.name} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                           <div className="rag-product-info">
                             <div className="rag-product-name">{p.name}</div>
                             <div className="rag-product-price">
