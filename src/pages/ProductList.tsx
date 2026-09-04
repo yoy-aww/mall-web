@@ -8,14 +8,16 @@ export default function ProductList() {
   const cat = params.get('cat') || ''
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetch = async () => {
       const [ps, cs] = await Promise.all([api.products(), api.categories()])
       setProducts(ps)
       setCategories(cs)
+      setLoading(false)
     }
-    fetch().catch(() => setProducts([]))
+    fetch().catch(() => { setLoading(false); setProducts([]) })
   }, [])
 
   const filtered = useMemo(() => {
@@ -38,7 +40,20 @@ export default function ProductList() {
           </Link>
         ))}
       </div>
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="prod-grid loading-grid">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="prod-card skeleton">
+              <div className="prod-img skeleton-block" />
+              <div className="prod-body">
+                <div className="skeleton-line w60" />
+                <div className="skeleton-line w40" />
+                <div className="skeleton-line w30" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="empty">暂无商品</div>
       ) : (
         <div className="prod-grid">

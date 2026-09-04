@@ -482,7 +482,7 @@ export default function Profile() {
                   </div>
                 )}
                 {!loadingOrders && orders.map(o => (
-                  <OrderCard key={o.id} order={o} />
+                  <OrderCard key={o.id} order={o} refresh={loadOrders} />
                 ))}
               </div>
             )}
@@ -502,8 +502,9 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({ order, refresh }: { order: Order; refresh?: () => void }) {
   const navigate = useNavigate()
+  const [canceling, setCanceling] = useState(false)
   const s = STATUS_LABELS[order.status] || { label: order.status, color: '#999' }
   return (
     <div className="order-card">
@@ -542,17 +543,32 @@ function OrderCard({ order }: { order: Order }) {
         <div className="order-actions">
           <button
             className="btn btn-outline order-cancel-btn"
-            onClick={() => {
-              if (confirm('确定取消此订单？')) {
-                fetch(`/api/orders/${order.id}/status`, {
+            disabled={canceling}
+            onClick={async () => {
+              if (!confirm('确定取消此订单？')) return
+              setCanceling(true)
+              try {
+                const token = localStorage.getItem('token')
+                const res = await fetch(`/api/orders/${order.id}/status`, {
                   method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                   body: JSON.stringify({ status: 'cancelled' }),
                 })
+                const data = await res.json()
+                if (data.success) {
+                  alert('订单已取消')
+                  refresh?.()
+                } else {
+                  alert(data.error || '取消失败')
+                }
+              } catch {
+                alert('网络错误，取消失败')
+              } finally {
+                setCanceling(false)
               }
             }}
           >
-            取消订单
+            {canceling ? '取消中...' : '取消订单'}
           </button>
           <button
             className="btn btn-primary"
