@@ -52,7 +52,7 @@ function UserArea() {
   const navigate = useNavigate()
   if (user) {
     return (
-      <div className="user-area" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => navigate('/profile')}>
+      <div className="user-area" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => navigate('/profile?tab=info')}>
         <span className="user-avatar" style={{
           width: 32, height: 32, borderRadius: 16,
           background: 'linear-gradient(135deg, #a18cd1, #fbc2eb)',

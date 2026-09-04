@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import './RagWidget.css'
 
 const RAG_URL = import.meta.env.VITE_RAG_URL || 'http://localhost:8000'
+const SHOW_SOURCES = false  // 是否显示回答下方的来源引用
 
 interface Message {
   role: 'user' | 'ai'
@@ -64,7 +65,7 @@ export default function RagWidget() {
                 <div className="rag-welcome-icon">🍵</div>
                 <p>有任何问题，问我试试</p>
                 <div className="rag-suggestions">
-                  {['有什么商品推荐', '运费怎么算', '支持退换货吗'].map(s => (
+                  {['有什么商品推荐', '运费怎么算', '支持退换货吗', '订单查询', '退货退款'].map(s => (
                     <button key={s} className="rag-sugg" onClick={() => { setInput(s); ask(s) }}>
                       {s}
                     </button>
@@ -77,7 +78,7 @@ export default function RagWidget() {
               <div key={i} className={`rag-msg rag-msg-${m.role}`}>
                 <div className="rag-bubble">
                   {m.text}
-                  {m.sources && m.sources.length > 0 && (
+                  {SHOW_SOURCES && m.sources && m.sources.length > 0 && (
                     <div className="rag-sources">
                       {m.sources.map((s, j) => (
                         <div key={j} className="rag-source">
