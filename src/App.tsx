@@ -79,20 +79,34 @@ function NotifyIcon() {
 
   useEffect(() => {
     if (!getToken()) return
-    const t = setInterval(async () => {
-      try {
-        const d = await api.getNotifications()
-        setUnread((d as any).data?.unread ?? (d as any).unread ?? 0)
-      } catch { /* ignore */ }
-    }, 30000)
-    const load = async () => {
+
+    // 首次拉取兜底（已有未读消息时立即显示）
+    const init = async () => {
       try {
         const d = await api.getNotifications()
         setUnread((d as any).data?.unread ?? (d as any).unread ?? 0)
       } catch { /* ignore */ }
     }
-    load()
-    return () => clearInterval(t)
+    init()
+
+    // SSE 实时推送
+    let es: EventSource | null = null
+    try {
+      es = new EventSource(`/api/notifications/stream?auth=${getToken()}`)
+      es.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data)
+          if (data.type === 'notification') {
+            setUnread(u => u + 1)
+          }
+        } catch { /* ignore */ }
+      }
+      es.onerror = () => { /* EventSource 自动重连，忽略 */ }
+    } catch { /* 网络异常时降级为轮询 */ }
+
+    return () => {
+      es?.close()
+    }
   }, [])
 
   if (!getToken()) return null
