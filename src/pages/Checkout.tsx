@@ -18,6 +18,8 @@ export default function Checkout() {
     name: '', phone: '', province: '', city: '', address: '', note: '',
   })
   const [newAddrLabel, setNewAddrLabel] = useState('')
+  const [shipMethod, setShipMethod] = useState<'standard' | 'sfx'>('standard')
+  const shippingFee = shipMethod === 'sfx' ? 15 : (total >= 199 ? 0 : 8)
   const navigate = useNavigate()
   const user = getUser()
 
@@ -68,7 +70,8 @@ export default function Checkout() {
       const res = await api.createOrder({
         userId: user.id,
         items: orderItems,
-        totalAmount: total >= 199 ? total : total + 8,
+        totalAmount: total >= 199 ? total : total + shippingFee,
+        shippingMethod: shipMethod,
         shippingAddress: shipAddr,
         receiverName: form.name,
         receiverPhone: form.phone,
@@ -155,8 +158,8 @@ export default function Checkout() {
           <section className="panel">
             <h3 className="panel-title">配送方式</h3>
             <div className="ship-row">
-              <label className="radio-label"><input type="radio" name="ship" defaultChecked /> 标准快递 · ¥8（满 ¥199 免邮）</label>
-              <label className="radio-label"><input type="radio" name="ship" /> 顺丰特快 · ¥15</label>
+              <label className="radio-label"><input type="radio" name="ship" checked={shipMethod === 'standard'} onChange={() => setShipMethod('standard')} /> 标准快递 · ¥8（满 ¥199 免邮）</label>
+              <label className="radio-label"><input type="radio" name="ship" checked={shipMethod === 'sfx'} onChange={() => setShipMethod('sfx')} /> 顺丰特快 · ¥15</label>
             </div>
           </section>
         </div>
@@ -180,8 +183,8 @@ export default function Checkout() {
 
           <section className="panel sum">
             <div className="sum-line"><span>商品小计</span><span>¥{total.toFixed(2)}</span></div>
-            <div className="sum-line"><span>运费</span><span>满 ¥199 免邮，否则 ¥8</span></div>
-            <div className="sum-line big"><span>应付</span><span>¥{(total >= 199 ? total : total + 8).toFixed(2)}</span></div>
+            <div className="sum-line"><span>运费</span><span>{shipMethod === 'sfx' ? '¥15' : (total >= 199 ? '免邮' : '¥8')}</span></div>
+            <div className="sum-line big"><span>应付</span><span>¥{(total >= 199 ? total : total + shippingFee).toFixed(2)}</span></div>
           </section>
 
           <button className="btn btn-primary full-btn" onClick={handleSubmit} disabled={loading}>
