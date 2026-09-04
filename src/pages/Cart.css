@@ -37,9 +37,9 @@
 .empty-sub { margin: 6px 0 18px; font-size: 13px; }
 
 @media (max-width: 640px) {
-  .c-item, .c-price, .c-sub { display: none; }
   .cart-table thead { display: none; }
-  .cart-table td { display: block; }
-  .cart-table th { display: none; }
+  .cart-table tbody tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .c-item { display: flex !important; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .c-price, .c-sub { display: block !important; text-align: right; }
   .c-check, .c-qty, .c-op { display: flex; align-items: center; gap: 12px; }
 }

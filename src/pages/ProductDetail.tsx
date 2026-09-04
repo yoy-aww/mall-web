@@ -47,7 +47,10 @@ export default function ProductDetail() {
     }
   }
 
-  if (!p) return <div className="detail-page"><div className="loading">加载中…</div></div>
+  if (!p) {
+    if (error) return <div className="detail-page"><div style={{textAlign:'center',padding:'90px 0',color:'var(--text-muted)'}}><div style={{fontSize:48,marginBottom:12}}>😵</div><div style={{fontSize:16,marginBottom:8}}>商品不存在</div><Link to="/products" className="btn btn-ghost" style={{display:'inline-block',padding:'8px 20px',border:'1px solid var(--line)',borderRadius:'var(--radius)'}}>← 返回列表</Link></div></div>
+    return <div className="detail-page"><div style={{textAlign:'center',padding:'120px 0',color:'var(--text-muted)'}}><div className="loading">加载中…</div></div></div>
+  }
 
   const price = p.discountedPrice ?? p.originalPrice
   const save = p.discountedPrice ? p.originalPrice - price : 0

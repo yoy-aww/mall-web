@@ -548,7 +548,7 @@ function OrderCard({ order, refresh }: { order: Order; refresh?: () => void }) {
               if (!confirm('确定取消此订单？')) return
               setCanceling(true)
               try {
-                const token = localStorage.getItem('token')
+                const token = getToken()
                 const res = await fetch(`/api/orders/${order.id}/status`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

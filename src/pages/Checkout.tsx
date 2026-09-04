@@ -51,7 +51,7 @@ export default function Checkout() {
     )
   }
 
-  if (step === 'done') return <OrderDone goods={items} total={total} form={form} orderId={orderId} />
+  if (step === 'done') return <OrderDone goods={items} total={total} form={form} orderId={orderId} shippingFee={shippingFee} />
 
   const handleSubmit = async () => {
     if (!form.name || !form.phone || !form.address) { alert('请补全收货人/手机/地址'); return }
@@ -196,7 +196,7 @@ export default function Checkout() {
   )
 }
 
-function OrderDone({ goods, total, form, orderId }: { goods: CartItem[]; total: number; form: any; orderId: string }) {
+function OrderDone({ goods, total, form, orderId, shippingFee }: { goods: CartItem[]; total: number; form: any; orderId: string; shippingFee: number }) {
   return (
     <div className="checkout-page">
       <div className="done">
@@ -208,7 +208,7 @@ function OrderDone({ goods, total, form, orderId }: { goods: CartItem[]; total: 
           <div><span>收货人</span><b>{form.name} {form.phone}</b></div>
           <div><span>送达</span><b>{form.province} {form.city} {form.address}</b></div>
           <div><span>商品数</span><b>{goods.reduce((s, x) => s + x.quantity, 0)} 件</b></div>
-          <div><span>应付</span><b>¥{(total >= 199 ? total : total + 8).toFixed(2)}</b></div>
+          <div><span>应付</span><b>¥{(total + shippingFee).toFixed(2)}</b></div>
         </div>
         <div className="done-links">
           <Link to="/" className="btn btn-ghost">继续逛逛</Link>
