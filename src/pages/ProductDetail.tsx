@@ -8,6 +8,7 @@ import './ProductDetail.css'
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const [p, setP] = useState<Product | null>(null)
+  const [error, setError] = useState(false)
   const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState({ avg: 0, total: 0, dist: [0, 0, 0, 0, 0] })
   const [categoryName, setCategoryName] = useState('')
@@ -26,7 +27,7 @@ export default function ProductDetail() {
         const c = cs.find(x => x.id === p.categoryId)
         if (c) setCategoryName(c.name)
       }).catch(() => {})
-    }).catch(() => setP(null))
+    }).catch(() => { setError(true); setP(null) })
     loadReviews()
   }, [id])
 
