@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api, Product, Address, AfterSale, Notification } from '../api'
 import { getUser, setLogin } from '../auth'
 import './Profile.css'
@@ -28,7 +28,8 @@ const AFTERSALE_STATUS: Record<string, { label: string; color: string }> = {
 }
 
 export default function Profile() {
-  const [tab, setTab] = useState<Tab>('info')
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'info')
   const [orders, setOrders] = useState<Order[]>([])
   const [loadingOrders, setLoadingOrders] = useState(false)
   const [addresses, setAddresses] = useState<Address[]>([])

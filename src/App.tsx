@@ -3,6 +3,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { api, Banner } from './api'
 import { useCartStore, cartSummary } from './cart'
 import { isLoggedIn, getUser, getToken, logout } from './auth'
+import RagWidget from './components/RagWidget'
 import './App.css'
 
 function Logo() {
@@ -106,7 +107,7 @@ function NotifyIcon() {
   return (
     <span
       style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
-      onClick={() => navigate('/profile')}
+      onClick={() => navigate('/profile?tab=notifications')}
       title="消息通知"
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -162,6 +163,7 @@ export default function App() {
       <footer className="footer">
         <span>枸益补 · 道地本草商城 &nbsp;|&nbsp; 同源小程序商城</span>
       </footer>
+      <RagWidget />
     </div>
   )
 }
