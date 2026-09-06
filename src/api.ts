@@ -143,11 +143,46 @@ export const api = {
     const uid = getUser()?.id;
     return request<any[]>(`/orders${uid ? `?userId=${uid}` : ''}`);
   },
-  createOrder: (data: {
-    userId: string; items: { productId: string; productName: string; productImage: string; price: number; quantity: number }[];
-    totalAmount: number; shippingAddress: string; receiverName: string; receiverPhone: string; remark?: string; shippingMethod?: 'standard' | 'sfx';
+  /**
+   * 报价（不扣库存）：前端展示金额用。
+   * 后端是唯一计价源，新增规则只改后端。
+   */
+  previewOrder: (data: {
+    items: { productId: string; quantity: number }[];
+    shippingMethod?: 'standard' | 'sfx';
   }) =>
-    request<{ id: string }>('/orders', {
+    request<{
+      items: { productId: string; productName: string; price: number; quantity: number }[];
+      subtotal: number;
+      shippingFee: number;
+      total: number;
+      free: boolean;
+      shippingMethod: 'standard' | 'sfx';
+    }>('/orders/preview', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  /**
+   * 创建订单。
+   * 后端从 token 拿 userId、自行计算商品小计 / 运费 / 总额；
+   * 客户端不再传 totalAmount，避免前后端算价不一致。
+   */
+  createOrder: (data: {
+    items: { productId: string; quantity: number }[];
+    shippingAddress: string;
+    receiverName: string;
+    receiverPhone: string;
+    remark?: string;
+    shippingMethod?: 'standard' | 'sfx';
+  }) =>
+    request<{
+      id: string;
+      subtotal: number;
+      shippingFee: number;
+      total: number;
+      free: boolean;
+      shippingMethod: 'standard' | 'sfx';
+    }>('/orders', {
       method: 'POST',
       body: JSON.stringify(data),
     }),

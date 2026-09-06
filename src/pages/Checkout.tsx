@@ -19,9 +19,23 @@ export default function Checkout() {
   })
   const [newAddrLabel, setNewAddrLabel] = useState('')
   const [shipMethod, setShipMethod] = useState<'standard' | 'sfx'>('standard')
-  const shippingFee = shipMethod === 'sfx' ? 15 : (total >= 199 ? 0 : 8)
+  // 金额由后端 preview 接口给出，前端不再自己算运费
+  const [quote, setQuote] = useState<{ subtotal: number; shippingFee: number; total: number; free: boolean } | null>(null)
+  const shippingFee = quote?.shippingFee ?? 0
   const navigate = useNavigate()
   const user = getUser()
+
+  // 购物车 / 配送方式变化时拉报价（后端为唯一计价源）
+  useEffect(() => {
+    if (items.length === 0) { setQuote(null); return }
+    let cancelled = false
+    const body = {
+      items: items.map(it => ({ productId: it.id, quantity: it.quantity })),
+      shippingMethod: shipMethod,
+    }
+    api.previewOrder(body).then((res: any) => { if (!cancelled) setQuote(res) }).catch(() => { if (!cancelled) setQuote(null) })
+    return () => { cancelled = true }
+  }, [items, shipMethod])
 
   useEffect(() => {
     if (!user) return
@@ -56,28 +70,19 @@ export default function Checkout() {
   const handleSubmit = async () => {
     if (!form.name || !form.phone || !form.address) { alert('请补全收货人/手机/地址'); return }
     if (!user) { navigate('/auth?from=/checkout'); return }
+    if (!quote) { alert('订单金额计算中，请稍候'); return }
 
     setLoading(true)
     try {
-      const orderItems = items.map(it => ({
-        productId: it.id,
-        productName: it.name,
-        productImage: it.image,
-        price: it.price,
-        quantity: it.quantity,
-      }))
-      const shipAddr = `${form.province} ${form.city} ${form.address}`.trim()
       const res = await api.createOrder({
-        userId: user.id,
-        items: orderItems,
-        totalAmount: total >= 199 ? total : total + shippingFee,
+        items: items.map(it => ({ productId: it.id, quantity: it.quantity })),
         shippingMethod: shipMethod,
-        shippingAddress: shipAddr,
+        shippingAddress: `${form.province} ${form.city} ${form.address}`.trim(),
         receiverName: form.name,
         receiverPhone: form.phone,
         remark: form.note,
       })
-      const result = (res as any).data || res
+      const result = (res as any)
 
       // 如果是新地址，保存到地址簿
       if (showForm) {
@@ -182,13 +187,13 @@ export default function Checkout() {
           </section>
 
           <section className="panel sum">
-            <div className="sum-line"><span>商品小计</span><span>¥{total.toFixed(2)}</span></div>
-            <div className="sum-line"><span>运费</span><span>{shipMethod === 'sfx' ? '¥15' : (total >= 199 ? '免邮' : '¥8')}</span></div>
-            <div className="sum-line big"><span>应付</span><span>¥{(total >= 199 ? total : total + shippingFee).toFixed(2)}</span></div>
+            <div className="sum-line"><span>商品小计</span><span>{quote ? `¥${quote.subtotal.toFixed(2)}` : '计算中...'}</span></div>
+            <div className="sum-line"><span>运费</span><span>{quote ? (quote.free ? '免邮' : `¥${quote.shippingFee.toFixed(2)}`) : '计算中...'}</span></div>
+            <div className="sum-line big"><span>应付</span><span>{quote ? `¥${quote.total.toFixed(2)}` : '—'}</span></div>
           </section>
 
-          <button className="btn btn-primary full-btn" onClick={handleSubmit} disabled={loading}>
-            {loading ? '提交中...' : '提交订单'}
+          <button className="btn btn-primary full-btn" onClick={handleSubmit} disabled={loading || !quote}>
+            {loading ? '提交中...' : (quote ? '提交订单' : '计算中...')}
           </button>
         </div>
       </div>
