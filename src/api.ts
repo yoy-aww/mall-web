@@ -17,17 +17,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   const data = (await res.json()) as { success: boolean; data: T; error?: string };
   if (!data.success) throw new Error(data.error || '接口返回失败');
-  // 浏览器端七牛 https:// 端点不稳，降级为 http://（小程序端本就 http，正常）
-  return fixHttps(data.data) as T
-}
-// 七牛外链 HTTP 正常、HTTPS 不稳，展示用图统一降级为 http
-function fixHttps(v: any): any {
-  if (typeof v === 'string') return v.replace(/^https:\/\//, 'http://')
-  if (Array.isArray(v)) return v.map(x => fixHttps(x))
-  if (v && typeof v === 'object') return Object.fromEntries(
-    Object.entries(v).map(([k, val]) => [k, fixHttps(val)])
-  )
-  return v
+  return data.data as T;
 }
 
 export interface Category {
