@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import './RagWidget.css'
 
-const RAG_URL = import.meta.env.VITE_RAG_URL || 'http://localhost:8000'
+// 走商城后端代理：key 由 server 持有，不暴露到浏览器
+const RAG_URL = '/api/rag'
 const MALL_API = '/api'
-const SHOW_SOURCES = true
+const SHOW_SOURCES = false
 
 interface Product {
   id: string
