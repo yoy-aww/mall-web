@@ -12,7 +12,7 @@ export default function ProfileOrders() {
     setLoading(true)
     try {
       const d = await api.myOrders()
-      const list = (d as any).data || d
+      const list = Array.isArray(d) ? d : (d as any).list || []
       setOrders(Array.isArray(list) ? list : [])
     } catch {
       setOrders([])
