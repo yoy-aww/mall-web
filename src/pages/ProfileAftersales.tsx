@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { api, AfterSale } from '../api'
 import { AFTERSALE_STATUS, useMessage } from './profile-shared'
 
@@ -9,6 +9,8 @@ export default function ProfileAftersales() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ orderId: '', reason: '', description: '' })
   const REASON_OPTIONS = ['口味不符', '漏发', '物流破损', '质量问题', '其他']
+
+  useEffect(() => { load() }, [])
 
   async function load() {
     setLoading(true)

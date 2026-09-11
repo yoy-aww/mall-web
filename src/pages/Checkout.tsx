@@ -22,6 +22,8 @@ export default function Checkout() {
   // 金额由后端 preview 接口给出，前端不再自己算运费
   const [quote, setQuote] = useState<{ subtotal: number; shippingFee: number; total: number; free: boolean } | null>(null)
   const shippingFee = quote?.shippingFee ?? 0
+  // 下单成功后保存购物车快照，避免 clear() 后数据丢失
+  const [doneSnapshot, setDoneSnapshot] = useState<{ items: CartItem[]; total: number; shippingFee: number } | null>(null)
   const navigate = useNavigate()
   const user = getUser()
 
@@ -52,6 +54,8 @@ export default function Checkout() {
     })
   }, [addresses])
 
+  if (step === 'done' && doneSnapshot) return <OrderDone goods={doneSnapshot.items} total={doneSnapshot.total} form={form} orderId={orderId} shippingFee={doneSnapshot.shippingFee} />
+
   if (items.length === 0) {
     return (
       <div className="checkout-page">
@@ -64,8 +68,6 @@ export default function Checkout() {
       </div>
     )
   }
-
-  if (step === 'done') return <OrderDone goods={items} total={total} form={form} orderId={orderId} shippingFee={shippingFee} />
 
   const handleSubmit = async () => {
     if (!form.name || !form.phone || !form.address) { alert('请补全收货人/手机/地址'); return }
@@ -96,6 +98,8 @@ export default function Checkout() {
         }).catch(() => {})
       }
 
+      // 保存快照后再清空购物车（OrderDone 需要快照渲染）
+      setDoneSnapshot({ items: [...items], total, shippingFee })
       setOrderId(result.id)
       setStep('done')
       cartActions.clear()

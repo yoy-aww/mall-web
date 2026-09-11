@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { api, Address } from '../api'
 import { useMessage } from './profile-shared'
 
@@ -9,6 +9,8 @@ export default function ProfileAddresses() {
   const [form, setForm] = useState({ label: '', name: '', phone: '', province: '', city: '', address: '' })
   const [mode, setMode] = useState<'add' | 'edit'>('add')
   const [editingId, setEditingId] = useState('')
+
+  useEffect(() => { load() }, [])
 
   async function load() {
     setLoading(true)
