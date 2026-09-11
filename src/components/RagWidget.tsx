@@ -82,20 +82,20 @@ export default function RagWidget() {
             <button className="rag-close" onClick={() => setOpen(false)}>×</button>
           </div>
 
-          <div className="rag-body" ref={listRef}>
-            {msgs.length === 0 && (
-              <div className="rag-welcome">
-                <div className="rag-welcome-icon">🍵</div>
-                <p>有任何问题，问我试试</p>
-                <div className="rag-suggestions">
-                  {['有什么商品推荐', '运费怎么算', '支持退换货吗', '订单查询', '退货退款'].map(s => (
-                    <button key={s} className="rag-sugg" onClick={() => { setInput(s); ask(s) }}>
-                      {s}
-                    </button>
-                  ))}
-                </div>
+          <div className="rag-body">
+            <div className="rag-welcome">
+              <div className="rag-welcome-icon">🍵</div>
+              <p>有任何问题，问我试试</p>
+              <div className="rag-suggestions">
+                {['有什么商品推荐', '运费怎么算', '支持退换货吗', '订单查询', '退货退款'].map(s => (
+                  <button key={s} className="rag-sugg" onClick={() => { setInput(s); ask(s) }}>
+                    {s}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            <div className="rag-messages" ref={listRef}>
 
             {msgs.map((m, i) => (
               <div key={i} className={`rag-msg rag-msg-${m.role}`}>
@@ -145,6 +145,7 @@ export default function RagWidget() {
             )}
 
             {error && <div className="rag-error">{error}</div>}
+            </div>
           </div>
 
           <div className="rag-footer">
