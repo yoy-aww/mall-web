@@ -14,6 +14,8 @@ export default function ProductDetail() {
   const [categoryName, setCategoryName] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ rating: 5, content: '' })
+  const [images, setImages] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
   const [hover, setHover] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [msg, setMsg] = useState('')
@@ -37,14 +39,33 @@ export default function ProductDetail() {
     api.reviewStats(id).then(setStats).catch(() => {})
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    if (images.length + files.length > 6) { setMsg('最多上传6张图片'); return }
+    setUploading(true)
+    try {
+      for (const f of Array.from(files)) {
+        const { url } = await api.uploadImage(f)
+        setImages(prev => [...prev, url])
+      }
+    } catch (err: any) {
+      setMsg(err.message || '上传失败')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
   const handleSubmit = async () => {
     if (!user || !id) return
     if (!form.content.trim()) { setMsg('请写几句评价'); return }
     setSubmitting(true)
     setMsg('')
     try {
-      await api.createReview({ productId: id, userId: user.id, rating: form.rating, content: form.content.trim() })
+      await api.createReview({ productId: id, userId: user.id, rating: form.rating, content: form.content.trim(), images })
       setForm({ rating: 5, content: '' })
+      setImages([])
       setShowForm(false)
       loadReviews()
       setMsg('评价成功，感谢您的反馈！')
@@ -142,6 +163,23 @@ export default function ProductDetail() {
                 rows={4}
                 maxLength={500}
               />
+              {images.length > 0 && (
+                <div className="upload-preview">
+                  {images.map((src, i) => (
+                    <div key={i} className="upload-thumb">
+                      <img src={src} alt="" />
+                      <button type="button" className="upload-remove" onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="form-upload">
+                <label className="upload-btn">
+                  {uploading ? '上传中...' : '＋ 上传图片'}
+                  <input type="file" accept="image/*" multiple onChange={handleFileUpload} disabled={uploading || images.length >= 6} style={{ display: 'none' }} />
+                </label>
+                <span className="upload-hint">{images.length}/6</span>
+              </div>
               <div className="form-actions">
                 <button className="btn-submit" onClick={handleSubmit} disabled={submitting}>
                   {submitting ? '提交中...' : '提交评价'}

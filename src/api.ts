@@ -191,11 +191,25 @@ export const api = {
   reviews: (productId: string) => request<Review[]>(`/reviews?productId=${encodeURIComponent(productId)}`),
   reviewStats: (productId: string) =>
     request<{ avg: number; total: number; dist: number[] }>(`/reviews/product/${encodeURIComponent(productId)}/stats`),
-  createReview: (data: { productId: string; userId: string; rating: number; content: string }) =>
+  createReview: (data: { productId: string; userId: string; rating: number; content: string; images?: string[] }) =>
     request<{ id: string }>('/reviews', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  uploadImage: (file: File) => {
+    const token = getToken()
+    const fd = new FormData()
+    fd.append('file', file)
+    return fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: fd,
+    }).then(async r => {
+      const data = await r.json()
+      if (!data.success) throw new Error(data.error || '上传失败')
+      return data.data as { url: string }
+    })
+  },
 
   // 地址簿
   addresses: () => request<Address[]>('/addresses'),
