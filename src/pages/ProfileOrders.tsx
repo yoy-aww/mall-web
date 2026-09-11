@@ -82,7 +82,7 @@ function OrderCard({ order, refresh }: { order: Order; refresh?: () => void }) {
       <div className="order-items">
         {order.items.map((item: any, i: number) => (
           <div key={i} className="order-item">
-            <img src={item.productImage} alt="" className="order-item-img" />
+            <img src={item.productImage} alt="" className="order-item-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
             <div className="order-item-info">
               <span className="order-item-name">{item.productName}</span>
               <span className="order-item-price">¥{item.price} × {item.quantity}</span>
